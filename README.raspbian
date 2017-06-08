@@ -1,0 +1,39 @@
+On Raspbian, virt-viewer need compile again.
+
+sudo apt-get update && sudo apt-get upgrade
+sudo apt-get install libwxgtk3.0-dev libcurl4-gnutls-dev ( or libcurl4-openssl-dev, libcurl4-nss-dev)
+sudo apt-get install libxml-perl gettext libglib2.0-dev libxml2-dev libgtk-3-dev libssl-dev libepoxy-dev libjpeg-dev libgstreamer1.0-dev libpulse-dev gstreamer1.0-omx libusb-1.0-0-dev
+
+wget https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+tar zxf intltool-0.51.0.tar.gz
+cd intltool-0.51.0
+./configure --prefix=/usr
+make && sudo make install
+cd ..
+
+wget https://www.spice-space.org/download/releases/spice-protocol-0.12.12.tar.bz2
+ bzip2 -cd spice-protocol-0.12.12.tar.bz2 | tar xf -
+cd spice-protocol-0.12.12/
+./configure --prefix=/usr
+make && sudo make install
+cd ..
+
+wget https://www.spice-space.org/download/usbredir/usbredir-0.7.tar.bz2
+ bzip2 -cd usbredir-0.7.tar.bz2 | tar xf -
+./configure --prefix=/usr
+make && sudo make install
+cd ..
+
+wget https://www.spice-space.org/download/gtk/spice-gtk-LATEST.tar.bz2
+bzip2 -cd spice-gtk-LATEST.tar.bz2 | tar xf -
+cd spice-gtk-0.33
+./configure CFLAGS="-DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g -DHAVE_LIBOPENMAX=2 -DOMX -DOMX_SKIP64BIT -ftree-vectorize -pipe -DUSE_EXTERNAL_OMX -DHAVE_LIBBCM_HOST -DUSE_EXTERNAL_LIBBCM_HOST -DUSE_VCHIQ_ARM -Wno-psabi -I/opt/vc/include/ -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux" LDFLAGS="-L/opt/vc/lib/ -lbrcmGLESv2 -lbrcmEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm" --prefix=/usr --enable-usbredir=yes --enable-pulse=yes
+make && sudo make install
+cd ..
+ 
+wget https://virt-manager.org/download/sources/virt-viewer/virt-viewer-5.0.tar.gz
+tar zxf virt-viewer-5.0.tar.gz
+cd virt-viewer-5.0
+./configure --prefix=/usr --without-gtk-vnc --with-spice-gtk
+make && sudo make install
+cd ..

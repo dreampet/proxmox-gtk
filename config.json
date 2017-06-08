@@ -1,0 +1,6 @@
+{
+  "server": "192.168.100.230",
+  "user": "root",
+  "pass": "admin",
+  "realm": "pam"
+}
