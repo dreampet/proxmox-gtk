@@ -29,7 +29,27 @@ class Palette
     {
       Jzon::Parser parser;
       PVE_LOGIN	login = parser.parseFile("config.json");
-      return pve->Authentication(&login);
+      return Palette::pve->Authentication(&login);
+    }
+
+    void static Callback_Menu( GtkMenuItem *menuitem, gpointer user_data )
+    {
+      std::cout << gtk_menu_item_get_label (menuitem) << " clicked" << std::endl;
+    }
+    void static Callback_Button( GtkMenuToolButton *button, gpointer user_data )
+    {
+      GtkWidget	*menu;
+      menu = gtk_menu_new();
+      const char *items_str[] = {"Shutdown", "Stop", "Reset", "Start"};
+      for (int i = 0; i < sizeof (items_str) / sizeof (char *); i++)
+      {
+        GtkWidget	*item;
+        item = gtk_menu_item_new_with_label( items_str[i] );
+        gtk_widget_show( item );
+        g_signal_connect (item, "activate", G_CALLBACK (Callback_Menu), user_data );
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+      }
+      gtk_menu_popup_at_pointer( GTK_MENU(menu), NULL );
     }
 
     void Init()
@@ -45,17 +65,19 @@ class Palette
         {
           GtkWidget *image;
           char      *label;
-          if (pve->Status(*j) == VM_RUNNING)
-            image = gtk_image_new_from_pixbuf( gdk_pixbuf_new_from_xpm_data ( computer_running) );
-          else
-            image = gtk_image_new_from_pixbuf( gdk_pixbuf_new_from_xpm_data ( computer_stopped) );
+          PVEAPI_VM_STATUS status = pve->Status( *j );
+          image = gtk_image_new_from_pixbuf( gdk_pixbuf_new_from_xpm_data ( status == VM_RUNNING ? computer_running : computer_stopped) );
           label = g_strdup_printf( "%s\n(%d)", (*j)->get("name").toString().c_str(), (*j)->get("id").toInt() );
-          GtkToolItem *item = gtk_tool_button_new (image, label );
+          GtkToolItem *item = gtk_tool_button_new( image, label );
+
+          g_signal_connect (item, "clicked", G_CALLBACK (Callback_Button), *j );
+
           gtk_tool_item_group_insert (GTK_TOOL_ITEM_GROUP( node ), item, -1 );
           g_free (label);
         }
       }
     }
+
     GtkWidget *GetPalette()
     {
       return palette;
