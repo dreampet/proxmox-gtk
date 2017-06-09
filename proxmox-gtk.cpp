@@ -4,14 +4,25 @@
 #include "images/computer-running.xpm"
 #include "images/computer-stopped.xpm"
 #include "pveapi.h"
+#include "vmtoolbutton.h"
 
 class Palette
 {
   private:
     GtkWidget	*palette;
     PVEAPI	*pve;
+    PVE_VM	*current;
 
   public:
+    void SetCurrent( PVE_VM *_current )
+    {
+      current = _current;
+    }
+    PVE_VM *GetCurrent()
+    {
+      return current;
+    }
+
     Palette()
     {
       palette = gtk_tool_palette_new ();
@@ -32,16 +43,32 @@ class Palette
       return Palette::pve->Authentication(&login);
     }
 
+    //  callback this when popmenu item was clicked
     void static Callback_Menu( GtkMenuItem *menuitem, gpointer user_data )
     {
-      std::cout << gtk_menu_item_get_label (menuitem) << " clicked" << std::endl;
+      Palette *palette = (Palette *)user_data;
+      PVE_VM	*vm = palette->GetCurrent();
+
+      std::cout << vm->get("name").toString();
+      std::cout << gtk_menu_item_get_label( menuitem ) << std::endl;
     }
-    void static Callback_Button( GtkMenuToolButton *button, gpointer user_data )
+
+    //  callback this when palette items was clicked
+    void static Callback_Button( VmToolButton *button, gpointer user_data )
     {
+      Palette *palette = (Palette *)user_data;
+      PVE_VM	*vm = (PVE_VM *)button->user_data;
+
+      palette->SetCurrent( vm );
+
+      PVEAPI_VM_STATUS	status = (PVEAPI_VM_STATUS) vm->get("status").toInt();
+      const char *items_str_running[] = {"Shutdown", "Stop", "Reset"};
+      const char *items_str_stopped[] = {"Start"};
+      const char **items_str = status == VM_RUNNING ? items_str_running : items_str_stopped;
+
       GtkWidget	*menu;
       menu = gtk_menu_new();
-      const char *items_str[] = {"Shutdown", "Stop", "Reset", "Start"};
-      for (int i = 0; i < sizeof (items_str) / sizeof (char *); i++)
+      for (int i = 0; i < sizeof( items_str ) / sizeof( char * ); i++)
       {
         GtkWidget	*item;
         item = gtk_menu_item_new_with_label( items_str[i] );
@@ -52,28 +79,30 @@ class Palette
       gtk_menu_popup_at_pointer( GTK_MENU(menu), NULL );
     }
 
+    // you should do authention before here
     void Init()
     {
       std::list<PVE_NODE *> nodes = pve->Nodes();
       for (std::list<PVE_NODE *>::iterator i = nodes.begin(); i != nodes.end(); i++)
       {
-        GtkWidget *node = gtk_tool_item_group_new( (*i)->get("name").toString().c_str() );
-        gtk_container_add (GTK_CONTAINER (palette), node);
+        GtkWidget *group = gtk_tool_item_group_new( (*i)->get("name").toString().c_str() );
+        gtk_container_add( GTK_CONTAINER (palette), group );
 
-        std::list<PVE_VM *> vms = pve->Vms(*i);
-        for (std::list<PVE_VM *>::iterator j = vms.begin(); j != vms.end(); j++)
+        std::list<PVE_VM *> items = pve->Vms(*i);
+        for (std::list<PVE_VM *>::iterator j = items.begin(); j != items.end(); j++)
         {
-          GtkWidget *image;
-          char      *label;
+          VmToolButton	*item;
           PVEAPI_VM_STATUS status = pve->Status( *j );
-          image = gtk_image_new_from_pixbuf( gdk_pixbuf_new_from_xpm_data ( status == VM_RUNNING ? computer_running : computer_stopped) );
-          label = g_strdup_printf( "%s\n(%d)", (*j)->get("name").toString().c_str(), (*j)->get("id").toInt() );
-          GtkToolItem *item = gtk_tool_button_new( image, label );
-
-          g_signal_connect (item, "clicked", G_CALLBACK (Callback_Button), *j );
-
-          gtk_tool_item_group_insert (GTK_TOOL_ITEM_GROUP( node ), item, -1 );
+          const char	**icon = status == VM_RUNNING ? computer_running : computer_stopped;
+          GtkWidget *image = gtk_image_new_from_pixbuf( gdk_pixbuf_new_from_xpm_data( icon ) );
+          char  *label = g_strdup_printf( "%s\n(%d)", (*j)->get("name").toString().c_str(), (*j)->get("id").toInt() );
+          item = vm_tool_button_new ( image, label );
+          item->user_data = *j;
           g_free (label);
+
+          g_signal_connect (item, "clicked", G_CALLBACK (Callback_Button), this);
+
+          gtk_tool_item_group_insert (GTK_TOOL_ITEM_GROUP( group ), GTK_TOOL_ITEM(item), -1 );
         }
       }
     }
@@ -92,7 +121,7 @@ int main (int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 //  gtk_window_set_screen (GTK_WINDOW (window), NULL);
-  gtk_window_set_title(GTK_WINDOW(window), "Proxmox PI");
+  gtk_window_set_title(GTK_WINDOW(window), "Proxmox VE");
 
   gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
   gtk_container_set_border_width (GTK_CONTAINER (window), 8);

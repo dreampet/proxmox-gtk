@@ -41,16 +41,11 @@ bool PVEAPI::Authentication (PVE_LOGIN *login)
 PVEAPI_VM_STATUS PVEAPI::Status(PVE_VM *vm)
 {
   Jzon::Node node = Request( Format(PVEAPI_GET_STATUS, vm->get("node").toString(), vm->get("id").toInt() ) );
-  if (!node.isNull())
-  {
-    if (node.get("status").toString() == "running")
-      return VM_RUNNING;
-    else if (node.get("status").toString() == "stopped")
-      return VM_STOPPED;
-    else
-      return VM_UNKNOWN;
-  }
-  return VM_INVALID;
+  if (!node.isNull()
+  && node.get("status").toString() == "running")
+    return VM_RUNNING;
+  else
+    return VM_STOPPED;
 }
 
 bool PVEAPI::compare_node (const PVE_NODE * first, const PVE_NODE * second)
@@ -98,6 +93,10 @@ std::list <PVE_VM *> PVEAPI::Vms(PVE_NODE *node)
       vm->add( "id", n.get(i).get("vmid") );
       vm->add( "name", n.get(i).get("name") );
       vm->add( "node", node->get("name") );
+      if( node->get("status").toString() == "running")
+        vm->add( "status", VM_RUNNING);
+      else
+        vm->add( "status", VM_STOPPED);
       
       ret.push_back(vm);
     }

@@ -33,9 +33,7 @@ You can explore the API documentation at http://pve.proxmox.com/pve-docs/api-vie
 
 enum PVEAPI_VM_STATUS {
 	VM_RUNNING,
-	VM_STOPPED,
-        VM_UNKNOWN,
-        VM_INVALID
+	VM_STOPPED
 };
 
 typedef Jzon::Node PVE_NODE;
