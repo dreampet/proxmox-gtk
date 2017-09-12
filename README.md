@@ -7,8 +7,4 @@ Proxmox-GTK is GTK3 based, it can run on an very small linux box like [raspberry
 
 ## BUILD (linux)
 
-git clone https://github.com/Zguy/Jzon.git
-
-git clone https://github.com/grynko/curlite.git
-
 make

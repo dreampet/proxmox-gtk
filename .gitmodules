@@ -1,0 +1,6 @@
+[submodule "Jzon"]
+	path = Jzon
+	url = https://github.com/Zguy/Jzon
+[submodule "curlite"]
+	path = curlite
+	url = https://github.com/grynko/curlite
